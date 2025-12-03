@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./config/db");
+const playlistRoutes = require("./routes/playlistRoutes");
+const geolocationRoutes = require("./routes/geolocationRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -11,6 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use("/api/playlists", playlistRoutes);
+app.use("/api/geolocations", geolocationRoutes);
+
 app.get("/", (req, res) => {
   res.send("Hello World! Node.js Backend is running.");
 });
