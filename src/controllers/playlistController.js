@@ -1,8 +1,16 @@
 const db = require("../config/db");
 
 const savePlaylist = async (req, res) => {
-  const { title, artist, url, duration, environment, timeOfDay, location } =
-    req.body;
+  const {
+    title,
+    artist,
+    url,
+    duration,
+    environment,
+    timeOfDay,
+    location,
+    userId,
+  } = req.body;
 
   if (!title || !url) {
     return res.status(400).json({ error: "Title and URL are required" });
@@ -10,8 +18,8 @@ const savePlaylist = async (req, res) => {
 
   try {
     const insertQuery = `
-      INSERT INTO playlists (title, artist, url, duration, environment, time_of_day, location) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7) 
+      INSERT INTO playlists (title, artist, url, duration, environment, time_of_day, location, uploaded_by) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *
     `;
     const values = [
@@ -22,6 +30,7 @@ const savePlaylist = async (req, res) => {
       environment,
       timeOfDay,
       location,
+      userId,
     ];
 
     const newPlaylist = await db.query(insertQuery, values);
