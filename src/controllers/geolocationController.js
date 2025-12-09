@@ -1,15 +1,13 @@
 const db = require("../config/db");
 
 const saveGeolocation = async (req, res) => {
-  // Accept either `clerk_id` or `user_id` from the client; use as user_id in DB
+  // Accept `user_id` from the client and use as user_id in DB
   const { user_id, location_name, lat, lng } = req.body;
 
   if (!user_id || !lat || !lng) {
-    return res
-      .status(400)
-      .json({
-        error: "Clerk ID (user_id), Latitude, and Longitude are required",
-      });
+    return res.status(400).json({
+      error: "Clerk ID (user_id), Latitude, and Longitude are required",
+    });
   }
 
   try {
