@@ -11,11 +11,23 @@ const createTables = async () => {
 
     console.log("Creating tables...");
 
-    // Geolocations Table (No foreign key to users)
+    // Users Table
+    // Stores user metadata linked to Clerk authentication.
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        clerk_id TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log('Created "users" table');
+
+    // Geolocations Table (stores a clerk user id in `user_id`)
     await db.query(`
       CREATE TABLE IF NOT EXISTS geolocations (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id TEXT,
+        user_id TEXT REFERENCES users(clerk_id) ON DELETE CASCADE,
         location_name TEXT,
         lat DOUBLE PRECISION,
         lng DOUBLE PRECISION,
@@ -36,6 +48,7 @@ const createTables = async () => {
         environment TEXT[],
         time_of_day TEXT[],
         location TEXT,
+        uploaded_by TEXT REFERENCES users(clerk_id) ON DELETE SET NULL,
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
