@@ -26,7 +26,7 @@ const createUserFromClerk = async (req, res) => {
 
     // Insert user into database with created_at timestamp
     await db.query(
-      "INSERT INTO users (clerk_id, email, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (clerk_id) DO NOTHING",
+      "INSERT INTO users (clerk_id, email) VALUES ($1, $2) ON CONFLICT (clerk_id) DO NOTHING",
       [clerkId, email]
     );
 
