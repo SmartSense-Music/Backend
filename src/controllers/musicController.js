@@ -192,7 +192,7 @@ const recommendMusic = async (req, res) => {
     const hasMatch = recommendations.some((r) => r.score > 0);
     if (!hasMatch) {
       const fallback = await client.query(
-        `SELECT m.id, m.artist, m.music AS title, m.duration, m.url
+        `SELECT m.id, m.artist, m.music AS title, m.duration, m.url, 0 AS score
          FROM musics m
          ORDER BY random()
          LIMIT $1`,
