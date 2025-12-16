@@ -151,6 +151,66 @@ const uploadMusic = async (req, res) => {
   }
 };
 
+const recommendMusic = async (req, res) => {
+  const client = await db.pool.connect();
+  try {
+    const { environment, timeOfDay, location, action, limit } = req.body || {};
+    const envParam = environment || null;
+    const timeParam = timeOfDay || null;
+    const locParam = location || null;
+    const actionParam = action || null;
+    const limitVal = parseInt(limit, 10) || 20;
+
+    const query = `
+      SELECT
+        m.id,
+        m.artist,
+        m.music AS title,
+        m.duration,
+        m.url,
+        (
+          (CASE WHEN e.name = $1 THEN 1 ELSE 0 END)
+          + (CASE WHEN t.name = $2 THEN 1 ELSE 0 END)
+          + (CASE WHEN l.name = $3 THEN 1 ELSE 0 END)
+          + (CASE WHEN ua.name = $4 THEN 1 ELSE 0 END)
+        ) AS score
+      FROM recommand r
+      JOIN musics m ON r.music = m.id
+      LEFT JOIN environment e ON r.environment = e.id
+      LEFT JOIN time_of_the_day t ON r.time_of_the_day = t.id
+      LEFT JOIN locations l ON r.location = l.id
+      LEFT JOIN user_actions ua ON r.user_action = ua.id
+      ORDER BY score DESC
+      LIMIT $5
+    `;
+
+    const params = [envParam, timeParam, locParam, actionParam, limitVal];
+    const result = await client.query(query, params);
+
+    let recommendations = result.rows;
+
+    const hasMatch = recommendations.some((r) => r.score > 0);
+    if (!hasMatch) {
+      const fallback = await client.query(
+        `SELECT m.id, m.artist, m.music AS title, m.duration, m.url, 0 AS score
+         FROM musics m
+         ORDER BY random()
+         LIMIT $1`,
+        [limitVal]
+      );
+      recommendations = fallback.rows;
+    }
+
+    res.status(200).json({ success: true, recommendations });
+  } catch (error) {
+    console.error("recommendMusic error:", error);
+    res.status(500).json({ error: "Failed to fetch recommendations" });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   uploadMusic,
+  recommendMusic,
 };

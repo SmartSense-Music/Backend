@@ -2,6 +2,7 @@ const db = require("../config/db");
 
 // Handle user creation by fetching from Clerk using access token
 const createUserFromClerk = async (req, res) => {
+  const client = await db.pool.connect();
   try {
     const { userId, emailAddress } = req.body;
 
@@ -24,11 +25,15 @@ const createUserFromClerk = async (req, res) => {
         .json({ error: "Unable to extract email from Clerk user" });
     }
 
+    await client.query("BEGIN");
+
     // Insert user into database with created_at timestamp
-    await db.query(
+    await client.query(
       "INSERT INTO users (clerk_id, email) VALUES ($1, $2) ON CONFLICT (clerk_id) DO NOTHING",
       [clerkId, email]
     );
+
+    await client.query("COMMIT");
 
     console.log(`User created: ${clerkId} (${email})`);
     res.json({
