@@ -89,8 +89,8 @@ const createTables = async () => {
     await db.query(`
       CREATE TABLE IF NOT EXISTS user_interactions (
         user_id VARCHAR(255) REFERENCES users(clerk_id) ON DELETE CASCADE,
-        interaction INTEGER REFERENCES interactions(id) ON DELETE CASCADE,
-        music_id VARCHAR(255) REFERENCES musics(id) ON DELETE CASCADE
+        music_id VARCHAR(255) REFERENCES musics(id) ON DELETE CASCADE,
+        count INTEGER DEFAULT 0
       );
     `);
     console.log('Created "user_interactions" table');
