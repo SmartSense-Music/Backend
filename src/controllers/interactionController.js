@@ -17,6 +17,52 @@ const getInteractionByName = async (req, res) => {
   }
 };
 
+// Record or increment a user's interaction with a playlist/music
+const recordInteraction = async (req, res) => {
+  try {
+    const { user_id, playlist_id } = req.body || {};
+    if (!user_id || !playlist_id) {
+      return res.status(400).json({ error: "Missing user_id or playlist_id" });
+    }
+
+    // Check if a record exists
+    const existing = await db.query(
+      "SELECT count FROM user_interactions WHERE user_id = $1 AND music_id = $2",
+      [user_id, playlist_id]
+    );
+
+    if (existing.rows.length > 0) {
+      const current = existing.rows[0].count || 0;
+      if (current > 0) {
+        // Already liked -> unlike by setting count to 0
+        await db.query(
+          "UPDATE user_interactions SET count = 0 WHERE user_id = $1 AND music_id = $2",
+          [user_id, playlist_id]
+        );
+        return res.status(200).json({ success: true, liked: false });
+      } else {
+        // Not liked -> set to liked (1)
+        await db.query(
+          "UPDATE user_interactions SET count = 1 WHERE user_id = $1 AND music_id = $2",
+          [user_id, playlist_id]
+        );
+        return res.status(200).json({ success: true, liked: true });
+      }
+    } else {
+      // Insert new record with count 1 for the like
+      await db.query(
+        "INSERT INTO user_interactions (user_id, music_id, count) VALUES ($1, $2, $3)",
+        [user_id, playlist_id, 1]
+      );
+      return res.status(200).json({ success: true, liked: true });
+    }
+  } catch (error) {
+    console.error("recordInteraction error:", error);
+    res.status(500).json({ error: "Failed to record interaction" });
+  }
+};
+
 module.exports = {
   getInteractionByName,
+  recordInteraction,
 };

@@ -154,12 +154,8 @@ const uploadMusic = async (req, res) => {
 const recommendMusic = async (req, res) => {
   const client = await db.pool.connect();
   try {
-    const { environment, timeOfDay, location, action, limit } = req.body || {};
-    const envParam = environment || null;
-    const timeParam = timeOfDay || null;
-    const locParam = location || null;
-    const actionParam = action || null;
-    const limitVal = parseInt(limit, 10) || 20;
+    const { environment, timeOfDay, location, action, limit, user } =
+      req.body || {};
 
     const query = `
       SELECT
@@ -173,6 +169,7 @@ const recommendMusic = async (req, res) => {
           + (CASE WHEN t.name = $2 THEN 1 ELSE 0 END)
           + (CASE WHEN l.name = $3 THEN 1 ELSE 0 END)
           + (CASE WHEN ua.name = $4 THEN 1 ELSE 0 END)
+          + (CASE WHEN ui.count > 0 THEN 1 ELSE 0 END)
         ) AS score
       FROM recommand r
       JOIN musics m ON r.music = m.id
@@ -180,11 +177,12 @@ const recommendMusic = async (req, res) => {
       LEFT JOIN time_of_the_day t ON r.time_of_the_day = t.id
       LEFT JOIN locations l ON r.location = l.id
       LEFT JOIN user_actions ua ON r.user_action = ua.id
+      LEFT JOIN user_interactions ui ON ui.music_id = m.id AND ui.user_id = $6
       ORDER BY score DESC
       LIMIT $5
     `;
 
-    const params = [envParam, timeParam, locParam, actionParam, limitVal];
+    const params = [environment, timeOfDay, location, action, limit, user];
     const result = await client.query(query, params);
 
     let recommendations = result.rows;
@@ -196,7 +194,7 @@ const recommendMusic = async (req, res) => {
          FROM musics m
          ORDER BY random()
          LIMIT $1`,
-        [limitVal]
+        [limit]
       );
       recommendations = fallback.rows;
     }
